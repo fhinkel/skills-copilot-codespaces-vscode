@@ -1,67 +1,40 @@
-// Create the web server
-
-// Import modules
+// Create web server
 const express = require('express');
+// Create router
 const router = express.Router();
-const path = require('path');
+// Import controller
+const commentsController = require('../controllers/commentsController');
+const { check } = require('express-validator');
+const auth = require('../middleware/auth');
 
-// Import data
-const data = require(path.join(__dirname, '../data'));
+// Create comment
+// api/comments
+router.post('/',
+    auth,
+    [
+        check('comment', 'Comment is required').not().isEmpty(),
+        check('comment', 'Comment must be min 5 characters').isLength({ min: 5 })
+    ],
+    commentsController.createComment
+);
 
-// GET: /comments
-router.get('/', (req, res) => {
-  res.json(data.comments);
-});
+// Get comments by id
+router.get('/',
+    auth,
+    commentsController.getComments
+);
 
-// POST: /comments
-router.post('/', (req, res) => {
-  const newComment = {
-    id: data.comments.length + 1,
-    body: req.body.body,
-    postId: req.body.postId
-  };
+// Update comment
+router.put('/:id',
+    auth,
+    commentsController.updateComment
+);
 
-  data.comments.push(newComment);
+// Delete comment
+router.delete('/:id',
+    auth,
+    commentsController.deleteComment
+);
 
-  res.json(newComment);
-});
+module.exports = router;
 
-// GET: /comments/:id
-router.get('/:id', (req, res) => {
-  const comment = data.comments.find(comment => comment.id === parseInt(req.params.id));
-
-  if (!comment) {
-    return res.status(404).json({ message: `Comment with id ${req.params.id} was not found` });
-  }
-
-  res.json(comment);
-});
-
-// PUT: /comments/:id
-router.put('/:id', (req, res) => {
-  const comment = data.comments.find(comment => comment.id === parseInt(req.params.id));
-
-  if (!comment) {
-    return res.status(404).json({ message: `Comment with id ${req.params.id} was not found` });
-  }
-
-  comment.body = req.body.body;
-
-  res.json(comment);
-});
-
-// DELETE: /comments/:id
-router.delete('/:id', (req, res) => {
-  const comment = data.comments.find(comment => comment.id === parseInt(req.params.id));
-
-  if (!comment) {
-    return res.status(404).json({ message: `Comment with id ${req.params.id} was not found` });
-  }
-
-  const index = data.comments.indexOf(comment);
-  data.comments.splice(index, 1);
-
-  res.json(comment);
-});
-
-module.exports = router
